@@ -2,21 +2,62 @@
 
 Printable gang roster sheets for Necromunda, written in [Typst](https://typst.app).
 
-Ready-to-print PDFs live in [`pdfs/`](pdfs/). They are generated from the `.typ`
-sources — edit the source, not the PDF.
+Ready-to-print PDFs live in [`pdfs/`](pdfs/), and are attached to every
+[release](../../releases). They are generated from the `.typ` sources — edit the
+source, not the PDF.
 
-## Building
+## Generating the PDFs
+
+Install Typst first:
+
+```sh
+brew install typst
+```
+
+Build one sheet:
 
 ```sh
 typst compile --font-path fonts \
   gang_roster_core_book_clone.typ pdfs/gang_roster_core_book_clone.pdf
 ```
 
-Install Typst with `brew install typst`. The `--font-path` flag is required: the
-sheets use a font vendored in this repo rather than one from your system, so the
-output is identical everywhere.
+Build every sheet:
 
-To check the sheet needs nothing from your system, add `--ignore-system-fonts`.
+```sh
+for src in *.typ; do
+  typst compile --font-path fonts "$src" "pdfs/${src%.typ}.pdf"
+done
+```
+
+Rebuild on every save while editing:
+
+```sh
+typst watch --font-path fonts \
+  gang_roster_core_book_clone.typ pdfs/gang_roster_core_book_clone.pdf
+```
+
+`--font-path fonts` is required. The sheets use a font vendored in this repo
+rather than one from your system, so the output is identical everywhere.
+
+Add `--ignore-system-fonts` to prove a sheet needs nothing from your machine.
+Typst then warns about the fallback families, which is expected, and errors if a
+vendored font is missing.
+
+**Commit the regenerated PDF alongside the source.** Nothing checks that the two
+agree, so a source edit without a rebuild leaves a stale PDF in `pdfs/`.
+
+## Cutting a release
+
+Tag and push. The [release workflow](.github/workflows/release.yml) rebuilds
+every sheet on a clean runner and attaches the PDFs.
+
+```sh
+git tag v1.0
+git push origin v1.0
+```
+
+The workflow pins the Typst version, so a release built today matches one built
+later.
 
 ## Fonts
 

@@ -1,0 +1,47 @@
+name: release
+
+# Tagging vN.N.N builds every sheet and attaches the PDFs to a GitHub release.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned so a release built today matches one built next year.
+      - name: Install Typst
+        env:
+          TYPST_VERSION: '0.15.1'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o typst.tar.xz \
+            "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz"
+          tar -xJf typst.tar.xz
+          sudo install -m 755 typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
+          typst --version
+
+      # --ignore-system-fonts makes a missing vendored font fail the build.
+      # Without it Typst substitutes a runner font and ships a wrong-looking PDF.
+      - name: Compile sheets
+        run: |
+          set -euo pipefail
+          mkdir -p pdfs
+          for src in *.typ; do
+            typst compile --font-path fonts --ignore-system-fonts \
+              "$src" "pdfs/${src%.typ}.pdf"
+          done
+          ls -l pdfs
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pdfs/*.pdf
+          generate_release_notes: true
