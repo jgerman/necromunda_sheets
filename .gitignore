@@ -1,0 +1,4 @@
+# Preview renders. The PDFs under pdfs/ are committed; PNGs are throwaway.
+*.png
+
+.DS_Store
